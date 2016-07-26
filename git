@@ -1,0 +1,47 @@
+os.loadAPI("lib/json")
+
+local function git_get(sUser, sRepo, sDir, sDestination)
+  local sRes = http.get("https://api.github.com/repos/"..sUser.."/"..sRepo.."/contents/"..sDir).readAll()
+  if sRes then
+    local obj = json.decode(sRes)
+    for i=1, #obj do
+      local f = obj[i]
+      if f.type=="file" then
+        print(sDir.."/"..f.name.." > "..sDestination.."/"..f.name.."...")
+        local sRes2 = http.get(f.download_url).readAll()
+        if sRes2 then
+          local f = fs.open(sDestination.."/"..f.name, "w")
+          f.write(sRes2)
+          f.close()
+        else
+          error("HTTP failure")
+        end
+      elseif f.type=="dir" then
+        git_get(sUser, sRepo, sDir.."/"..f.name, sDestination.."/"..f.name)
+      end
+    end
+  else
+    error("HTTP failure")
+  end
+end
+
+local function git_clone(sUrl, sDestination)
+  local sDestination = sDestination:gsub("(.-)/*$", "%1") -- Remove trailing '/'
+  local user, repo = string.gmatch(sUrl, "https?://github%.com/([^/]-)/([^/]-)%.git")()
+  if not user or not repo then
+    print("Invalid github clone url")
+  end
+  git_get(user, repo, "", sDestination)
+end
+
+local arg = {...}
+
+if arg[1]=="clone" then
+  
+  if arg[2]==nil then
+    print("Usage: "..shell.getRunningProgram().." clone url [path]")
+    return
+  end
+  git_clone(arg[2], arg[3] or shell.dir())
+  
+end
