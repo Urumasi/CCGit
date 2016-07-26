@@ -1,7 +1,11 @@
 os.loadAPI("lib/json")
 
 local function git_get(sUser, sRepo, sDir, sDestination)
-  local sRes = http.get("https://api.github.com/repos/"..sUser.."/"..sRepo.."/contents/"..sDir).readAll()
+  local res = http.get("https://api.github.com/repos/"..sUser.."/"..sRepo.."/contents/"..sDir)
+  if not res then
+    error("HTTP failure")
+  end
+  local sRes = res.readAll()
   if sRes then
     local obj = json.decode(sRes)
     for i=1, #obj do
@@ -29,7 +33,10 @@ local function git_clone(sUrl, sDestination)
   local sDestination = sDestination:gsub("(.-)/*$", "%1") -- Remove trailing '/'
   local user, repo = string.gmatch(sUrl, "https?://github%.com/([^/]-)/([^/]-)%.git")()
   if not user or not repo then
-    print("Invalid github clone url")
+    user, repo = string.gmatch(sUrl, "https?://github%.com/([^/]-)/([^/]-)")()
+    if not user or not repo then
+      error("Invalid github clone url")
+    end
   end
   git_get(user, repo, "", sDestination)
 end
