@@ -38,6 +38,9 @@ local function git_clone(sUrl, sDestination)
       error("Invalid github clone url")
     end
   end
+  local f = fs.open(shell.dir().."/.ccgit", "w")
+  f.write(sUrl)
+  f.close()
   git_get(user, repo, "", sDestination)
 end
 
@@ -51,4 +54,14 @@ if arg[1]=="clone" then
   end
   git_clone(arg[2], arg[3] or shell.dir())
   
+elseif arg[1]=="pull" then
+
+  if not fs.exists(shell.dir().."/.ccgit") then
+    print("Not a valid git repository")
+    return
+  end
+  local f = fs.open(shell.dir().."/.ccgit", "r")
+  git_clone(f.read(), shell.dir())
+  f.close()
+
 end
