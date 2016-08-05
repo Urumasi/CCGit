@@ -61,7 +61,11 @@ elseif arg[1]=="pull" then
     return
   end
   local f = fs.open(shell.dir().."/.ccgit", "r")
-  git_clone(f.read(), shell.dir())
+  git_clone(f.readLine(), shell.dir())
   f.close()
+
+else
+
+  print("Usage: "..shell.getRunningProgram().."\n  clone - Clones from a repository\n  pull - Clone from last cloned repository in the current directory")
 
 end
